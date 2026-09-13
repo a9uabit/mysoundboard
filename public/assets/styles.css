@@ -1,0 +1,77 @@
+body {
+  background-color: rgb(10, 15, 30);
+}
+
+.error {
+  color: red;
+}
+
+.loading {
+  color: lawngreen;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 150px;
+  box-sizing: border-box;
+  padding: 10px 25px;
+  cursor: pointer;
+  background: rgb(60, 90, 180);
+  border: 2px solid white;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  user-select: none;
+}
+
+.btn-sb {
+  aspect-ratio: 1;
+  overflow-wrap: anywhere;
+  max-height: 150px;
+  max-width: 150px;
+  width: auto;
+}
+
+.sb {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 12px;
+  justify-content: center;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  gap: 5px;
+  padding: 5px 5px;
+  background: rgb(30, 45, 90);
+  margin: 10px auto;
+  font-size: 1.5em;
+  border: 2px solid white;
+  border-radius: 12px;
+}
+
+.menu > a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  padding: 2px 15px;
+  border: 3px solid transparent;
+  border-radius: 7px;
+}
+
+.menu > a[aria-current = "page"] {
+  border-color: white;
+  background: rgb(60, 90, 180);
+}
+
+@media (min-width: 645px) {
+  .sb {
+    grid-template-columns: repeat(4, auto);
+  }
+}

@@ -1,0 +1,79 @@
+use anyhow::anyhow;
+use poise::command;
+
+use crate::bot::{Context, Error};
+
+#[command(slash_command)]
+pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.defer().await?;
+
+    let ping = ctx.ping().await;
+    ctx.say(format!("Pong! {}ms", ping.as_millis())).await?;
+    Ok(())
+}
+
+#[command(slash_command)]
+pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.defer().await?;
+
+    let (guild_id, channel_id) = {
+        let guild = ctx.guild().ok_or_else(|| anyhow!("can't get guild"))?;
+        let channel_id = guild
+            .voice_states
+            .get(&ctx.author().id)
+            .and_then(|voice_state| voice_state.channel_id);
+
+        (guild.id, channel_id)
+    };
+
+    let connect_to = match channel_id {
+        Some(channel) => channel,
+        None => {
+            ctx.say("ボイスチャットに参加してください").await?;
+
+            return Ok(());
+        }
+    };
+
+    let data = ctx.data();
+    let manager = &data.songbird;
+
+    if manager.get(guild_id).is_some() {
+        ctx.say("すでに参加しています").await?;
+        return Ok(());
+    }
+
+    if manager.join(guild_id, connect_to).await.is_ok() {
+        *data.connected_guild.write().await = Some(guild_id);
+
+        ctx.say("参加しました").await?;
+    } else {
+        ctx.say("なにかしらのエラーが発生しました").await?;
+    }
+
+    Ok(())
+}
+
+#[command(slash_command)]
+pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.defer().await?;
+
+    let guild_id = ctx.guild_id().ok_or_else(|| anyhow!("can't get guild"))?;
+
+    let data = ctx.data();
+    let manager = &data.songbird;
+    let has_handler = manager.get(guild_id).is_some();
+
+    if has_handler {
+        if let Err(e) = manager.remove(guild_id).await {
+            ctx.say(format!("エラーが発生しました: {:?}", e)).await?;
+        } else {
+            *data.connected_guild.write().await = None;
+            ctx.say("離脱しました").await?;
+        }
+    } else {
+        ctx.say("ボットがボイスチャットにいません").await?;
+    }
+
+    Ok(())
+}
