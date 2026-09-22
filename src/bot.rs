@@ -4,8 +4,7 @@ mod events;
 use std::{path::PathBuf, sync::Arc};
 
 use poise::{
-    FrameworkError, FrameworkOptions, PrefixFrameworkOptions,
-    serenity_prelude::{ClientBuilder, GatewayIntents, GuildId},
+    FrameworkError, FrameworkOptions, PrefixFrameworkOptions, serenity_prelude::{self as serenity, ClientBuilder, GatewayIntents, GuildId},
 };
 use songbird::Songbird;
 use tokio::sync::{RwLock, mpsc::Receiver};
@@ -16,6 +15,7 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 struct Data {
     songbird: Arc<Songbird>,
     connected_guild: Arc<RwLock<Option<GuildId>>>,
+    user_id: serenity::UserId,
 }
 
 pub enum SignalFromWeb {
@@ -23,7 +23,7 @@ pub enum SignalFromWeb {
     Play(PathBuf),
 }
 
-pub async fn bot(token: &str, rx: Receiver<SignalFromWeb>) -> Result<(), anyhow::Error> {
+pub async fn bot(token: &str, user_id: serenity::UserId, rx: Receiver<SignalFromWeb>) -> Result<(), anyhow::Error> {
     let framework_options = FrameworkOptions {
         commands: vec![commands::ping(), commands::join(), commands::leave()],
         event_handler: |framework, event| Box::pin(events::handle(framework, event)),
@@ -40,7 +40,7 @@ pub async fn bot(token: &str, rx: Receiver<SignalFromWeb>) -> Result<(), anyhow:
     let framework = poise::Framework::builder()
         .setup({
             let songbird = Arc::clone(&songbird);
-            |ctx, ready, framework| {
+            move |ctx, ready, framework| {
                 Box::pin(async move {
                     tracing::info!("logged in as {}", ready.user.tag());
                     poise::builtins::register_globally(ctx, &framework.options().commands).await?;
@@ -56,6 +56,7 @@ pub async fn bot(token: &str, rx: Receiver<SignalFromWeb>) -> Result<(), anyhow:
                     Ok(Data {
                         songbird,
                         connected_guild,
+                        user_id,
                     })
                 })
             }

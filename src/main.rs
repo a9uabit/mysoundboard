@@ -1,6 +1,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use mysoundboard::{app::WebAppContext, bot::SignalFromWeb, sounds::Sounds};
+use poise::serenity_prelude as serenity;
 use serde::Deserialize;
 use tokio::sync::mpsc::Sender;
 
@@ -8,6 +9,7 @@ use tokio::sync::mpsc::Sender;
 struct Config {
     token: String,
     sounds_folder: PathBuf,
+    user_id: serenity::UserId,
 }
 
 #[cfg(feature = "ssr")]
@@ -24,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
     {
         let token = config.token.clone();
         bot = Some(tokio::spawn(async move {
-            mysoundboard::bot::bot(token.as_str(), rx).await?;
+            mysoundboard::bot::bot(token.as_str(), config.user_id, rx).await?;
 
             Ok::<(), anyhow::Error>(())
         }));

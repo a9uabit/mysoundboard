@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use poise::command;
+use poise::{CreateReply, command};
 
 use crate::bot::{Context, Error};
 
@@ -14,6 +14,18 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
 
 #[command(slash_command)]
 pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
+    let data = ctx.data();
+
+    if ctx.author().id != data.user_id {
+        ctx.send(
+            CreateReply::new()
+                .ephemeral(true)
+                .content("指定されたユーザー以外は使用できません"),
+        )
+        .await?;
+        return Ok(());
+    }
+
     ctx.defer().await?;
 
     let (guild_id, channel_id) = {
@@ -29,13 +41,17 @@ pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
     let connect_to = match channel_id {
         Some(channel) => channel,
         None => {
-            ctx.say("ボイスチャットに参加してください").await?;
+            ctx.send(
+                CreateReply::new()
+                    .ephemeral(true)
+                    .content("ボイスチャットに参加してください"),
+            )
+            .await?;
 
             return Ok(());
         }
     };
 
-    let data = ctx.data();
     let manager = &data.songbird;
 
     if manager.get(guild_id).is_some() {
@@ -56,11 +72,22 @@ pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
 
 #[command(slash_command)]
 pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
+    let data = ctx.data();
+
+    if ctx.author().id != data.user_id {
+        ctx.send(
+            CreateReply::new()
+                .ephemeral(true)
+                .content("指定されたユーザー以外は使用できません"),
+        )
+        .await?;
+        return Ok(());
+    }
+
     ctx.defer().await?;
 
     let guild_id = ctx.guild_id().ok_or_else(|| anyhow!("can't get guild"))?;
 
-    let data = ctx.data();
     let manager = &data.songbird;
     let has_handler = manager.get(guild_id).is_some();
 
@@ -72,7 +99,12 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
             ctx.say("離脱しました").await?;
         }
     } else {
-        ctx.say("ボットがボイスチャットにいません").await?;
+        ctx.send(
+            CreateReply::new()
+                .ephemeral(true)
+                .content("ボットがボイスチャットにいません"),
+        )
+        .await?;
     }
 
     Ok(())
