@@ -1,3 +1,7 @@
+* {
+  color: white;
+}
+
 body {
   background-color: rgb(10, 15, 30);
 }
@@ -29,31 +33,42 @@ body {
 
 .btn-sb {
   aspect-ratio: 1;
+  overflow: hidden;
   overflow-wrap: anywhere;
-  max-height: 150px;
-  max-width: 150px;
-  width: auto;
+  /* height: 150px; */
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
 }
 
 .sb {
   display: grid;
-  grid-template-columns: repeat(3, auto);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   justify-content: center;
+  max-width: 474px;
+  margin-inline: auto;
 }
 
 .menu {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: fit-content;
   gap: 5px;
-  padding: 5px 5px;
+  padding: 5px;
   background: rgb(30, 45, 90);
   margin: 10px auto;
   font-size: 1.5em;
   border: 2px solid white;
   border-radius: 12px;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  flex-wrap: nowrap;
 }
 
 .menu > a {
@@ -63,15 +78,37 @@ body {
   padding: 2px 15px;
   border: 3px solid transparent;
   border-radius: 7px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.menu > a[aria-current = "page"] {
+.menu > a[aria-current="page"] {
   border-color: white;
   background: rgb(60, 90, 180);
 }
 
+.set {
+  border: 3px solid white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  color: white;
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 10px auto;
+}
+
+.set-btn {
+  font-size: initial;
+  background: tomato;
+  margin-left: auto;
+  width: 120px;
+}
+
 @media (min-width: 645px) {
   .sb {
-    grid-template-columns: repeat(4, auto);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 636px;
   }
 }

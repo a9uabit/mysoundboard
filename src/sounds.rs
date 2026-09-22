@@ -1,11 +1,8 @@
-use std::{
-    path::PathBuf,
-    sync::Arc,
-};
+use std::{path::PathBuf, sync::Arc};
 use tokio::sync::{Mutex, RwLock};
 
-use crate::common_sounds::SoundsFile;
 use crate::common_sounds::Sound;
+use crate::common_sounds::SoundsFile;
 
 const SOUNDS_FILE_PATH: &str = "./sounds.json";
 
@@ -121,7 +118,7 @@ impl Sounds {
 
         let mut index = Vec::new();
         for sound in sounds {
-            index.push(sound.path);
+            index.push(sound.1.path);
         }
 
         let mut dirs = tokio::fs::read_dir(self.sounds_folder.clone()).await?;
@@ -132,13 +129,14 @@ impl Sounds {
                 add_things.push(Sound {
                     path: entry.path(),
                     name: Default::default(),
-                    set_id: Default::default(),
                 });
             }
         }
 
         self.data_mut(|data| {
-            data.sounds.append(&mut add_things);
+            for add_thing in add_things {
+                data.sounds.insert(add_thing);
+            }
         })
         .await?;
 

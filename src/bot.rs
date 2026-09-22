@@ -75,7 +75,11 @@ pub async fn bot(token: &str, rx: Receiver<SignalFromWeb>) -> Result<(), anyhow:
     Ok(())
 }
 
-fn setup(songbird: Arc<Songbird>, rx: Receiver<SignalFromWeb>, connected_guild: Arc<RwLock<Option<GuildId>>>) {
+fn setup(
+    songbird: Arc<Songbird>,
+    rx: Receiver<SignalFromWeb>,
+    connected_guild: Arc<RwLock<Option<GuildId>>>,
+) {
     tokio::spawn(async move {
         events::receive_signal(songbird, rx, connected_guild).await;
     });
@@ -85,7 +89,7 @@ async fn on_error(error: FrameworkError<'_, Data, Error>) {
     match error {
         FrameworkError::Setup { error, .. } => {
             tracing::error!("Failed to start bot: {:?}", error);
-            panic!();
+            panic!("{:?}", error);
         }
         FrameworkError::Command { error, ctx, .. } => {
             tracing::error!("Error in command {}: {:?}", ctx.command().name, error)

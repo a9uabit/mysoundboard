@@ -13,25 +13,26 @@ pub mod common_sounds {
     use slotmap::SlotMap;
 
     slotmap::new_key_type! {
+        pub struct SoundKey;
         pub struct SetKey;
     }
 
     #[derive(Default, Serialize, Deserialize)]
     pub struct SoundsFile {
-        pub sounds: Vec<Sound>,
+        pub sounds: SlotMap<SoundKey, Sound>,
         pub sets: SlotMap<SetKey, Set>,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Clone, Serialize, Deserialize)]
     pub struct Set {
         pub name: String,
+        pub sounds: Vec<SoundKey>,
     }
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Sound {
         pub path: PathBuf,
         pub name: Option<String>,
-        pub set_id: Option<SetKey>,
     }
 }
 
@@ -44,4 +45,3 @@ pub fn hydrate() {
 
     leptos::mount::hydrate_body(App);
 }
-
