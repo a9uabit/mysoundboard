@@ -26,7 +26,7 @@ pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
         return Ok(());
     }
 
-    ctx.defer().await?;
+    ctx.defer_ephemeral().await?;
 
     if data.connected_guild.read().await.is_some() {
         ctx.send(
@@ -95,7 +95,7 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
         return Ok(());
     }
 
-    ctx.defer().await?;
+    ctx.defer_ephemeral().await?;
 
     let Some(guild_id) = *data.connected_guild.read().await else {
         ctx.send(
