@@ -23,6 +23,8 @@ pub async fn handle(
             if let Some(guild_id) = new.guild_id
                 && connected.is_some_and(|connected| connected == guild_id)
             {
+                // it means the bot is already not in voice chat
+
                 songbird.remove(guild_id).await?;
                 *connected = None;
             }

@@ -35,6 +35,8 @@ impl Sounds {
     async fn load_data(&self) -> std::io::Result<Arc<RwLock<SoundsFile>>> {
         let load_lock = Arc::clone(&self.load_locks);
 
+        // avoid waiting for another load when a cached value is already available
+        // if not, wait for the ongoing load and check the cache again
         let _lock = match load_lock.try_lock() {
             Ok(lock) => lock,
             Err(_) => {
@@ -66,6 +68,7 @@ impl Sounds {
 
                 sounds_file
             }
+
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                 let data = SoundsFile::default();
                 let json = serde_json::to_string_pretty(&data).unwrap();
@@ -74,6 +77,7 @@ impl Sounds {
 
                 data
             }
+
             Err(e) => {
                 return Err(e);
             }
@@ -122,7 +126,9 @@ impl Sounds {
 
         let mut dirs = tokio::fs::read_dir(self.sounds_folder.clone()).await?;
 
+        // declare for avoiding refer the data many times
         let mut add_things = Vec::new();
+
         while let Ok(Some(entry)) = dirs.next_entry().await {
             if !index.contains(&entry.path()) {
                 add_things.push(Sound {

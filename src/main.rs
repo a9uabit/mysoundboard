@@ -22,6 +22,7 @@ async fn main() -> anyhow::Result<()> {
     let config = tokio::fs::read_to_string("./config.json").await?;
     let config: Config = serde_json::from_str(&config)?;
 
+    // use this to communicate both side
     let (tx, rx) = tokio::sync::mpsc::channel(10);
 
     #[cfg(feature = "backend")]
@@ -106,6 +107,7 @@ async fn web(sounds_folder: PathBuf, tx: Sender<SignalFromWeb>) -> anyhow::Resul
 
     logging::log!("listening on {}", addr);
 
+    // print qrcode to be able to send sound from another devices
     let qr = QrCode::new(format!("http://{}:{}", local_ip()?, addr.port()))?;
     let string = qr.render::<qrcode::render::unicode::Dense1x2>().build();
     logging::log!("{}", string);
