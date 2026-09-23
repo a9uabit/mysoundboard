@@ -15,22 +15,38 @@ struct Config {
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt().init();
+
+    use tokio_util::sync::CancellationToken;
+
     let config = tokio::fs::read_to_string("./config.json").await?;
     let config: Config = serde_json::from_str(&config)?;
 
     let (tx, rx) = tokio::sync::mpsc::channel(10);
 
-    let bot;
+    #[cfg(feature = "backend")]
+    let bot_cancel = CancellationToken::new();
 
     #[cfg(feature = "backend")]
-    {
+    let bot = {
+        let bot_cancel = bot_cancel.clone();
         let token = config.token.clone();
-        bot = Some(tokio::spawn(async move {
-            mysoundboard::bot::bot(token.as_str(), config.user_id, rx).await?;
+        tokio::spawn(async move {
+            tokio::select! {
+                result = mysoundboard::bot::bot(
+                    token.as_str(),
+                    config.user_id,
+                    rx
+                ) => {
+                    result?;
+                }
+
+                _ = bot_cancel.cancelled() => {}
+            }
 
             Ok::<(), anyhow::Error>(())
-        }));
-    }
+        })
+    };
 
     tokio::select! {
         res = web(config.sounds_folder, tx) => {
@@ -40,15 +56,16 @@ async fn main() -> anyhow::Result<()> {
         _ = tokio::signal::ctrl_c() => {}
     }
 
-    if let Some(bot) = bot {
-        bot.abort();
+    #[cfg(feature = "backend")]
+    {
+        bot_cancel.cancel();
         bot.await??;
     }
 
     Ok(())
 }
 
-async fn web(sounds_folder: PathBuf, tx: Sender<SignalFromWeb>) -> std::io::Result<()> {
+async fn web(sounds_folder: PathBuf, tx: Sender<SignalFromWeb>) -> anyhow::Result<()> {
     use axum::Router;
     use leptos::{logging, prelude::*};
     use leptos_axum::{LeptosRoutes, generate_route_list};
@@ -57,9 +74,7 @@ async fn web(sounds_folder: PathBuf, tx: Sender<SignalFromWeb>) -> std::io::Resu
 
     use mysoundboard::app::{App, shell};
 
-    tracing_subscriber::fmt().init();
-
-    let conf = get_configuration(None).unwrap();
+    let conf = get_configuration(None)?;
 
     let mut options = conf.leptos_options;
     options.site_addr.set_ip([0, 0, 0, 0].into());
@@ -91,15 +106,13 @@ async fn web(sounds_folder: PathBuf, tx: Sender<SignalFromWeb>) -> std::io::Resu
 
     logging::log!("listening on {}", addr);
 
-    let qr = QrCode::new(format!("http://{}:{}", local_ip().unwrap(), addr.port())).unwrap();
+    let qr = QrCode::new(format!("http://{}:{}", local_ip()?, addr.port()))?;
     let string = qr.render::<qrcode::render::unicode::Dense1x2>().build();
     logging::log!("{}", string);
 
-    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    axum::serve(listener, app.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
 }

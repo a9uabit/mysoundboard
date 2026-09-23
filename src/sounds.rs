@@ -14,12 +14,11 @@ pub struct Sounds {
 
 impl Sounds {
     pub fn new(sounds_folder: PathBuf) -> std::io::Result<Self> {
-        if sounds_folder.exists() && sounds_folder.is_file() {
+        if sounds_folder.is_file() {
             std::fs::remove_file(&sounds_folder)?;
         }
-        if !sounds_folder.exists() {
-            std::fs::create_dir(&sounds_folder)?;
-        }
+
+        std::fs::create_dir_all(&sounds_folder)?;
 
         Ok(Self {
             sounds_folder,

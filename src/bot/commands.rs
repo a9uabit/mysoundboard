@@ -28,6 +28,17 @@ pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
 
     ctx.defer().await?;
 
+    if data.connected_guild.read().await.is_some() {
+        ctx.send(
+            CreateReply::new()
+                .ephemeral(true)
+                .content("先に、すでに接続しているサーバーから退出させてください\nそのサーバーが分からない場合でもここで`/leave`を使用することで退出させることができます"),
+        )
+        .await?;
+
+        return Ok(());
+    }
+
     let (guild_id, channel_id) = {
         let guild = ctx.guild().ok_or_else(|| anyhow!("can't get guild"))?;
         let channel_id = guild
@@ -86,7 +97,16 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
 
     ctx.defer().await?;
 
-    let guild_id = ctx.guild_id().ok_or_else(|| anyhow!("can't get guild"))?;
+    let Some(guild_id) = *data.connected_guild.read().await else {
+        ctx.send(
+            CreateReply::new()
+                .ephemeral(true)
+                .content("ボットがボイスチャットにいません"),
+        )
+        .await?;
+
+        return Ok(());
+    };
 
     let manager = &data.songbird;
     let has_handler = manager.get(guild_id).is_some();
