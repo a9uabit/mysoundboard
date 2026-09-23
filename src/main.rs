@@ -15,8 +15,8 @@ struct Config {
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = tokio::fs::read_to_string("./config.json").await.unwrap();
-    let config: Config = serde_json::from_str(&config).unwrap();
+    let config = tokio::fs::read_to_string("./config.json").await?;
+    let config: Config = serde_json::from_str(&config)?;
 
     let (tx, rx) = tokio::sync::mpsc::channel(10);
 
