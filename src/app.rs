@@ -110,8 +110,7 @@ async fn fetch_set(id: SetKey) -> Result<Option<Vec<Sound>>, ServerFnError> {
             data.sets.get(id).map(|set| {
                 set.sounds
                     .iter()
-                    .cloned()
-                    .filter_map(|sound_key| data.sounds.get(sound_key))
+                    .filter_map(|sound_key| data.sounds.get(*sound_key))
                     .cloned()
                     .collect::<Vec<Sound>>()
             })
